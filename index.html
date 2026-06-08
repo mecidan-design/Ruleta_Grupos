@@ -48,7 +48,7 @@
   .title-letter:nth-child(13){color:var(--orange);animation-delay:1.2s}
   @keyframes letterBounce { 0%,100%{transform:translateY(0) rotate(0deg)} 25%{transform:translateY(-8px) rotate(-3deg)} 75%{transform:translateY(4px) rotate(3deg)} }
   .wheel-container { position: relative; display: flex; flex-direction: column; align-items: center; }
-  .wheel-outer { position: relative; width: min(72vw,520px); height: min(72vw,520px); margin-bottom: 1.5rem; }
+  .wheel-outer { position: relative; width: min(61vw,442px); height: min(61vw,442px); margin-bottom: 1.5rem; }
   .wheel-ring { position: absolute; inset: -12px; border-radius: 50%; background: conic-gradient(var(--red) 0deg,var(--orange) 45deg,var(--yellow) 90deg,var(--green) 135deg,var(--teal) 180deg,var(--blue) 225deg,var(--purple) 270deg,var(--pink) 315deg,var(--red) 360deg); animation: ringRotate 4s linear infinite; z-index: -1; }
   @keyframes ringRotate { to { transform: rotate(360deg); } }
   .wheel-pointer { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); z-index: 10; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)); }
@@ -243,11 +243,13 @@ async function loadNames() {
   spinSequence = buildSequence(students);
   currentSpin = spinSequence.map(s => s.name);
   spinIndex = 0;
+  const btn = document.getElementById('spin-btn');
+  btn.textContent = 'SPIN';
+  btn.disabled = false;
   document.getElementById('loading-msg').style.display = 'none';
   setupCanvas();
   drawWheel(currentAngle);
   renderQueue();
-  document.getElementById('spin-btn').disabled = false;
 }
 
 function setupCanvas() {
@@ -280,6 +282,7 @@ function drawWheel(angle) {
     ctx.font = `${fontSize}px 'Fredoka One', cursive`;
     ctx.textAlign = 'right';
     ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.lineWidth = 3;
+    ctx.letterSpacing = '2px';
     ctx.strokeText(name, r - 14, fontSize * 0.38);
     ctx.fillStyle = '#FFFEF0';
     ctx.fillText(name, r - 14, fontSize * 0.38);
@@ -417,7 +420,6 @@ function showFinalGroups() {
 
 buildTitle();
 spawnParticles();
-document.getElementById('spin-btn').disabled = true;
 loadNames();
 window.addEventListener('resize', () => { setupCanvas(); drawWheel(currentAngle); });
 </script>
