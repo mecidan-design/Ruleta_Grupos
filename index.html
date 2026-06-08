@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ruleta de Grupos — 5to Alef</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f6f6f4; --bg3: #efefec;
+    --text: #1a1a18; --text2: #6b6b66; --text3: #a0a09a;
+    --border: rgba(0,0,0,0.11); --border2: rgba(0,0,0,0.2);
+    --radius: 8px; --radius-lg: 12px;
+    --blue: #185FA5; --blue-bg: #E6F1FB; --blue-border: #B5D4F4;
+    --red: #A32D2D; --red-bg: #FCEBEB; --red-border: #F7C1C1;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a; --bg2: #252523; --bg3: #2e2e2b;
+      --text: #f0ede6; --text2: #9a9a94; --text3: #666660;
+      --border: rgba(255,255,255,0.11); --border2: rgba(255,255,255,0.2);
+    }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; padding: 1.5rem 1rem; }
+  .app { max-width: 700px; margin: 0 auto; }
+  .app-header { margin-bottom: 1.5rem; }
+  .app-header h1 { font-size: 20px; font-weight: 500; }
+  .app-header p { font-size: 13px; color: var(--text2); margin-top: 3px; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 1.25rem; }
+  .tab { flex: 1; padding: 10px 8px; border: 0.5px solid var(--border); border-radius: var(--radius); background: var(--bg); cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text2); transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .tab.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .tab:hover:not(.active) { background: var(--bg2); }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+  .section-title { font-size: 14px; font-weight: 500; margin-bottom: 8px; }
+  .label { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+  .hint { font-size: 11px; color: var(--text3); margin-top: 6px; line-height: 1.6; }
+  .btn { padding: 9px 16px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn:hover { background: var(--bg2); }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .btn-primary:hover { opacity: 0.82; background: var(--text); }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .status-bar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: var(--radius); font-size: 13px; margin-bottom: 1rem; }
+  .status-ok { background: #EAF3DE; color: #27500A; border: 0.5px solid #C0DD97; }
+  .status-warn { background: #FAEEDA; color: #633806; border: 0.5px solid #FAC775; }
+  .status-err { background: var(--red-bg); color: var(--red); border: 0.5px solid var(--red-border); }
+  .status-loading { background: var(--bg2); color: var(--text2); border: 0.5px solid var(--border); }
+  .student-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .student-table th { text-align: left; padding: 6px 10px; font-size: 11px; font-weight: 600; color: var(--text3); border-bottom: 0.5px solid var(--border); text-transform: uppercase; letter-spacing: 0.04em; }
+  .student-table td { padding: 8px 10px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+  .student-table tr:last-child td { border-bottom: none; }
+  .student-table tr.absent td { opacity: 0.38; }
+  .student-table tr.absent td .name-cell { text-decoration: line-through; }
+  .order-badge { display: inline-flex; width: 24px; height: 24px; border-radius: 50%; font-size: 11px; font-weight: 600; align-items: center; justify-content: center; }
+  .badge-a { background: var(--blue-bg); color: var(--blue); }
+  .badge-b { background: var(--red-bg); color: var(--red); }
+  .badge-neutral { background: var(--bg2); color: var(--text3); }
+  .pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+  .pill-blue { background: var(--blue-bg); color: #0C447C; border: 0.5px solid var(--blue-border); }
+  .pill-red { background: var(--red-bg); color: #791F1F; border: 0.5px solid var(--red-border); }
+  .pill-done { background: var(--bg2); color: var(--text3); text-decoration: line-through; border: 0.5px solid var(--border); }
+  .pill-neutral { background: var(--bg2); color: var(--text3); border: 0.5px solid var(--border); }
+  .wheel-section { text-align: center; }
+  .wheel-wrap { position: relative; width: 320px; height: 320px; margin: 0 auto 1.5rem; }
+  .wheel-pointer { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 13px solid transparent; border-right: 13px solid transparent; border-top: 24px solid var(--text); z-index: 10; }
+  canvas { display: block; }
+  .spin-result { padding: 1rem 1.5rem; margin-bottom: 1rem; border-radius: var(--radius-lg); border: 0.5px solid var(--border); background: var(--bg); min-height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .result-name { font-size: 34px; font-weight: 500; letter-spacing: -0.5px; }
+  .result-group { font-size: 15px; font-weight: 500; margin-top: 5px; }
+  .result-a { color: var(--blue); }
+  .result-b { color: var(--red); }
+  #spin-btn { font-size: 16px; padding: 14px 48px; border-radius: var(--radius-lg); margin-bottom: 1.25rem; }
+  .queue-wrap { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin-top: 8px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .group-col h4 { font-size: 13px; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+  .group-pills { display: flex; flex-wrap: wrap; gap: 5px; min-height: 32px; }
+  .group-a-text { color: var(--blue); }
+  .group-b-text { color: var(--red); }
+  .hist-row { display: flex; gap: 10px; padding: 12px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; }
+  .hist-row:last-child { border-bottom: none; }
+  .hist-date { min-width: 110px; color: var(--text2); font-size: 12px; padding-top: 2px; flex-shrink: 0; }
+  .hist-groups { flex: 1; }
+  .hist-g { margin-bottom: 4px; font-weight: 500; }
+  .empty-state { text-align: center; padding: 2.5rem; color: var(--text3); font-size: 14px; }
+  .badge-hist { display: inline-block; padding: 2px 7px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-right: 5px; }
+  .badge-a-hist { background: var(--blue-bg); color: var(--blue); }
+  .badge-b-hist { background: var(--red-bg); color: var(--red); }
+  hr { border: none; border-top: 0.5px solid var(--border); margin: 1rem 0; }
+  .spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid var(--border2); border-top-color: var(--text2); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .toggle-absent { font-size: 11px; padding: 3px 8px; border-radius: 20px; cursor: pointer; border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text2); transition: all 0.12s; }
+  .toggle-absent:hover { border-color: var(--red); color: var(--red); }
+  .toggle-absent.is-absent { background: var(--red-bg); color: var(--red); border-color: var(--red-border); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="app-header">
+    <h1>Ruleta de Grupos</h1>
+    <p>5to Alef — inglés</p>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab active" onclick="switchTab('lista')"><i class="ti ti-users" aria-hidden="true"></i> Lista</button>
+    <button class="tab" onclick="switchTab('spin')"><i class="ti ti-rotate-clockwise" aria-hidden="true"></i> Ruleta</button>
+    <button class="tab" onclick="switchTab('historial')"><i class="ti ti-history" aria-hidden="true"></i> Historial</button>
+  </div>
+
+  <!-- LISTA -->
+  <div id="panel-lista" class="panel active">
+    <div id="sheet-status" class="status-bar status-loading">
+      <span class="spinner"></span>&nbsp;Conectando con Google Sheets...
+    </div>
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <p class="section-title" style="margin-bottom:0">Alumnos</p>
+        <button class="btn" onclick="loadFromSheets()"><i class="ti ti-refresh" aria-hidden="true"></i> Actualizar</button>
+      </div>
+      <p class="label">El orden de la tabla define quién cae primero en la ruleta. Para cambiar el orden, editá la columna ORDEN en el Sheet y presioná Actualizar. Podés también marcar ausentes acá abajo.</p>
+      <table class="student-table" id="student-table">
+        <thead><tr><th style="width:36px">#</th><th>Nombre</th><th>Grupo</th><th>Hoy</th></tr></thead>
+        <tbody id="student-tbody"><tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text3)">Cargando...</td></tr></tbody>
+      </table>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="goToSpin()">Ir a la ruleta <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+      </div>
+      <p class="hint">Los ausentes marcados en el Sheet (columna AUSENTE = x) se cargan automáticamente. También podés marcarlos manualmente acá — solo para esta sesión.</p>
+    </div>
+  </div>
+
+  <!-- RULETA -->
+  <div id="panel-spin" class="panel">
+    <div class="card wheel-section">
+      <div class="wheel-wrap">
+        <div class="wheel-pointer" aria-hidden="true"></div>
+        <canvas id="wheel" width="320" height="320" role="img" aria-label="Ruleta de nombres"></canvas>
+      </div>
+      <div id="spin-result" class="spin-result" style="display:none">
+        <div class="result-name" id="result-name"></div>
+        <div class="result-group" id="result-group"></div>
+      </div>
+      <button class="btn btn-primary" id="spin-btn" onclick="spinWheel()">
+        <i class="ti ti-rotate-clockwise" aria-hidden="true"></i> Girar
+      </button>
+      <div style="margin-top:4px">
+        <p class="label">Por sortear:</p>
+        <div class="queue-wrap" id="queue-wrap"></div>
+      </div>
+    </div>
+    <div class="card" id="current-groups" style="display:none">
+      <p class="section-title">Grupos formados</p>
+      <div class="two-col">
+        <div class="group-col">
+          <h4 class="group-a-text"><i class="ti ti-circle-filled" aria-hidden="true"></i> Grupo Azul</h4>
+          <div class="group-pills" id="group-a-list"></div>
+        </div>
+        <div class="group-col">
+          <h4 class="group-b-text"><i class="ti ti-circle-filled" aria-hidden="true"></i> Grupo Rojo</h4>
+          <div class="group-pills" id="group-b-list"></div>
+        </div>
+      </div>
+      <hr>
+      <div class="btn-row">
+        <button class="btn" onclick="saveSession()"><i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar al historial</button>
+        <button class="btn" onclick="resetSpin()"><i class="ti ti-refresh" aria-hidden="true"></i> Nueva clase</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORIAL -->
+  <div id="panel-historial" class="panel">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <p class="section-title" style="margin-bottom:0">Historial de clases</p>
+        <div style="display:flex; gap:8px;">
+          <button class="btn" onclick="exportCSV()"><i class="ti ti-download" aria-hidden="true"></i> CSV</button>
+          <button class="btn" onclick="clearHistory()" style="color:var(--red);border-color:var(--red-border)"><i class="ti ti-trash" aria-hidden="true"></i></button>
+        </div>
+      </div>
+      <div id="history-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSzgg3XMiyBoKZfuAl9vKoXXtgGRBvruSCZble4BM6RkWFN3QYdTnnKKe4vvn2Gmyv0dOjGS-dhpUr0/pub?output=csv';
+  const H_KEY = 'roulette_5toalef_hist_v1';
+
+  // Fallback: lista completa hardcodeada por si falla la conexión
+  const FALLBACK = [
+    'AGUSTÍN','FELIPE','FEDERICO','MORA','DELFINA',
+    'RODDY','JULIÁN','LUCIANO','SANTIAGO','VIGGO',
+    'MACARENA','VALENTINA','AMANDA','MARTÍN','LARRY',
+    'DANTE','ELI','FACUNDO','MANUEL','NAOMI','GIULIANA'
+  ];
+
+  let allStudents = [];   // [{name, order, absent}]
+  let manualAbsent = new Set();  // ausentes marcados manualmente en esta sesión
+  let spinOrder = [];     // nombres en orden, sin ausentes
+  let currentSpin = [];
+  let groupA = [], groupB = [];
+  let spinning = false;
+  let currentAngle = 0;
+  let spinIndex = 0;
+
+  function setStatus(type, msg) {
+    const el = document.getElementById('sheet-status');
+    el.className = 'status-bar status-' + type;
+    const spinnerHtml = type === 'loading' ? '<span class="spinner"></span>&nbsp;' : '';
+    const iconMap = { ok: 'ti-circle-check', warn: 'ti-alert-triangle', err: 'ti-circle-x' };
+    const iconHtml = type !== 'loading' ? `<i class="ti ${iconMap[type]}" aria-hidden="true"></i> ` : '';
+    el.innerHTML = spinnerHtml + iconHtml + msg;
+  }
+
+  function parseCSV(text) {
+    const lines = text.trim().split('\n');
+    return lines.map(line => {
+      const cols = [];
+      let inQuote = false, cell = '';
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') { inQuote = !inQuote; }
+        else if (c === ',' && !inQuote) { cols.push(cell.trim()); cell = ''; }
+        else { cell += c; }
+      }
+      cols.push(cell.trim());
+      return cols;
+    });
+  }
+
+  function capitalize(str) {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
+
+  async function loadFromSheets() {
+    setStatus('loading', 'Conectando con Google Sheets...');
+    try {
+      const res = await fetch(CSV_URL, { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const text = await res.text();
+      if (text.includes('<!DOCTYPE') || text.includes('<html')) throw new Error('no-csv');
+      const rows = parseCSV(text);
+      // Saltear header y filas vacías
+      const data = rows.filter((r, i) => i > 0 && r[0] && r[0].trim() && r[0].trim().toUpperCase() !== 'NOMBRE');
+      if (!data.length) throw new Error('sin-datos');
+
+      allStudents = data.map((r, i) => ({
+        name: capitalize(r[0].trim()),
+        order: parseInt(r[2]) || (i + 1),
+        absent: r[3] && r[3].trim().toLowerCase() === 'x'
+      })).filter(s => s.name);
+
+      allStudents.sort((a, b) => a.order - b.order);
+      buildSpinOrder();
+      renderTable();
+      const ausentes = allStudents.filter(s => s.absent || manualAbsent.has(s.name)).length;
+      const presentes = allStudents.length - ausentes;
+      setStatus('ok', `${allStudents.length} alumnos · ${presentes} presentes · ${ausentes} ausentes`);
+    } catch (e) {
+      useFallback();
+    }
+  }
+
+  function useFallback() {
+    allStudents = FALLBACK.map((name, i) => ({ name: capitalize(name), order: i + 1, absent: false }));
+    buildSpinOrder();
+    renderTable();
+    setStatus('warn', 'Sin conexión al Sheet — usando lista guardada. Actualizá cuando tengas internet.');
+  }
+
+  function buildSpinOrder() {
+    spinOrder = allStudents
+      .filter(s => !s.absent && !manualAbsent.has(s.name))
+      .map(s => s.name);
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById('student-tbody');
+    tbody.innerHTML = '';
+    let pos = 0;
+    allStudents.forEach(s => {
+      const isAbsent = s.absent || manualAbsent.has(s.name);
+      const tr = document.createElement('tr');
+      if (isAbsent) tr.className = 'absent';
+      const isA = !isAbsent && pos % 2 === 0;
+      const groupLabel = isAbsent ? '—' : (isA ? 'Azul' : 'Rojo');
+      const badgeClass = isAbsent ? 'badge-neutral' : (isA ? 'badge-a' : 'badge-b');
+      const pillClass = isAbsent ? 'pill-neutral' : (isA ? 'pill-blue' : 'pill-red');
+      const posLabel = isAbsent ? '—' : (pos + 1);
+      const absentBtnClass = 'toggle-absent' + (isAbsent ? ' is-absent' : '');
+      const absentBtnLabel = isAbsent ? 'Ausente' : 'Presente';
+      tr.innerHTML =
+        `<td><span class="order-badge ${badgeClass}">${posLabel}</span></td>` +
+        `<td><span class="name-cell">${s.name}</span></td>` +
+        `<td><span class="pill ${pillClass}">${groupLabel}</span></td>` +
+        `<td><button class="${absentBtnClass}" onclick="toggleManualAbsent('${s.name}')">${absentBtnLabel}</button></td>`;
+      if (!isAbsent) pos++;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function toggleManualAbsent(name) {
+    // Si ya está ausente por el Sheet, no hacemos nada (es override del sheet)
+    const student = allStudents.find(s => s.name === name);
+    if (student && student.absent) return;
+    if (manualAbsent.has(name)) manualAbsent.delete(name);
+    else manualAbsent.add(name);
+    buildSpinOrder();
+    renderTable();
+    const ausentes = allStudents.filter(s => s.absent || manualAbsent.has(s.name)).length;
+    const presentes = allStudents.length - ausentes;
+    setStatus('ok', `${allStudents.length} alumnos · ${presentes} presentes · ${ausentes} ausentes`);
+  }
+
+  function goToSpin() {
+    if (!spinOrder.length) { alert('No hay alumnos para sortear.'); return; }
+    currentSpin = [...spinOrder];
+    groupA = []; groupB = [];
+    spinIndex = 0; currentAngle = 0;
+    document.getElementById('spin-result').style.display = 'none';
+    document.getElementById('current-groups').style.display = 'none';
+    switchTab('spin');
+  }
+
+  const COLORS = [
+    ['#E6F1FB','#0C447C'],['#EAF3DE','#27500A'],['#EEEDFE','#3C3489'],
+    ['#E1F5EE','#085041'],['#FAEEDA','#633806'],['#FCEBEB','#791F1F']
+  ];
+
+  function drawWheel(ctx, names, angle) {
+    const cx = 160, cy = 160, r = 148;
+    ctx.clearRect(0, 0, 320, 320);
+    if (!names.length) return;
+    const n = names.length;
+    const arc = (2 * Math.PI) / n;
+    names.forEach((name, i) => {
+      const start = angle + i * arc - Math.PI / 2;
+      const end = start + arc;
+      const [fill, textCol] = COLORS[i % COLORS.length];
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, start, end); ctx.closePath();
+      ctx.fillStyle = fill; ctx.fill();
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(start + arc / 2);
+      ctx.textAlign = 'right'; ctx.fillStyle = textCol;
+      ctx.font = (n > 16 ? '10px' : n > 12 ? '11px' : '13px') + " -apple-system, system-ui, sans-serif";
+      ctx.fillText(name, r - 10, 4); ctx.restore();
+    });
+    ctx.beginPath(); ctx.arc(cx, cy, 22, 0, 2 * Math.PI);
+    ctx.fillStyle = '#ffffff'; ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.lineWidth = 1; ctx.stroke();
+  }
+
+  function renderWheel() {
+    const canvas = document.getElementById('wheel');
+    const ctx = canvas.getContext('2d');
+    const names = currentSpin.length ? currentSpin : spinOrder;
+    drawWheel(ctx, names, currentAngle);
+    renderQueue(names);
+  }
+
+  function renderQueue(names) {
+    const wrap = document.getElementById('queue-wrap');
+    wrap.innerHTML = '';
+    names.forEach((name, i) => {
+      const span = document.createElement('span');
+      span.className = 'pill ' + (i < spinIndex ? 'pill-done' : (i % 2 === 0 ? 'pill-blue' : 'pill-red'));
+      span.textContent = name;
+      wrap.appendChild(span);
+    });
+  }
+
+  function spinWheel() {
+    if (spinning) return;
+    if (!currentSpin.length) { alert('Cargá la lista primero.'); return; }
+    if (spinIndex >= currentSpin.length) { alert('Ya sorteaste a todos. Guardá o iniciá nueva clase.'); return; }
+    spinning = true;
+    document.getElementById('spin-btn').disabled = true;
+    document.getElementById('spin-result').style.display = 'none';
+    const canvas = document.getElementById('wheel');
+    const ctx = canvas.getContext('2d');
+    const n = currentSpin.length;
+    const arc = (2 * Math.PI) / n;
+    const targetIdx = spinIndex;
+    const targetAngle = -(targetIdx * arc) - arc / 2;
+    const totalSpin = (5 + Math.random() * 4) * 2 * Math.PI;
+    const normCurrent = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+    const normTarget = ((targetAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+    const diff = ((normTarget - normCurrent) + 2 * Math.PI) % (2 * Math.PI);
+    const totalRotation = totalSpin + diff;
+    const duration = 3000 + Math.random() * 1000;
+    const startTime = performance.now();
+    const startAngle = currentAngle;
+    function ease(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; }
+    function animate(now) {
+      const t = Math.min((now - startTime) / duration, 1);
+      currentAngle = startAngle + totalRotation * ease(t);
+      drawWheel(ctx, currentSpin, currentAngle);
+      if (t < 1) { requestAnimationFrame(animate); return; }
+      spinning = false;
+      document.getElementById('spin-btn').disabled = false;
+      const winner = currentSpin[targetIdx];
+      const isA = spinIndex % 2 === 0;
+      if (isA) groupA.push(winner); else groupB.push(winner);
+      spinIndex++;
+      document.getElementById('result-name').textContent = winner;
+      const grpEl = document.getElementById('result-group');
+      grpEl.textContent = isA ? '→ Grupo Azul' : '→ Grupo Rojo';
+      grpEl.className = 'result-group ' + (isA ? 'result-a' : 'result-b');
+      document.getElementById('spin-result').style.display = 'flex';
+      renderQueue(currentSpin);
+      updateGroups();
+    }
+    requestAnimationFrame(animate);
+  }
+
+  function updateGroups() {
+    document.getElementById('current-groups').style.display = 'block';
+    document.getElementById('group-a-list').innerHTML = groupA.map(n => `<span class="pill pill-blue">${n}</span>`).join('');
+    document.getElementById('group-b-list').innerHTML = groupB.map(n => `<span class="pill pill-red">${n}</span>`).join('');
+  }
+
+  function saveSession() {
+    if (!groupA.length && !groupB.length) { alert('No hay grupos para guardar.'); return; }
+    const history = JSON.parse(localStorage.getItem(H_KEY) || '[]');
+    const now = new Date();
+    const date = now.toLocaleDateString('es-AR') + ' ' + now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+    history.unshift({ date, groupA: [...groupA], groupB: [...groupB] });
+    localStorage.setItem(H_KEY, JSON.stringify(history));
+    alert('Guardado.');
+  }
+
+  function resetSpin() {
+    if (groupA.length + groupB.length > 0) {
+      if (!confirm('¿Nueva clase? Los grupos actuales se pierden si no guardaste.')) return;
+    }
+    currentSpin = [...spinOrder]; groupA = []; groupB = [];
+    spinIndex = 0; currentAngle = 0;
+    document.getElementById('spin-result').style.display = 'none';
+    document.getElementById('current-groups').style.display = 'none';
+    renderWheel();
+  }
+
+  function renderHistory() {
+    const history = JSON.parse(localStorage.getItem(H_KEY) || '[]');
+    const el = document.getElementById('history-list');
+    if (!history.length) {
+      el.innerHTML = '<div class="empty-state"><i class="ti ti-history" style="font-size:32px;display:block;margin-bottom:8px;" aria-hidden="true"></i>Todavía no hay sesiones guardadas.</div>';
+      return;
+    }
+    el.innerHTML = history.map(h =>
+      '<div class="hist-row">' +
+      '<div class="hist-date">' + h.date + '</div>' +
+      '<div class="hist-groups">' +
+      '<div class="hist-g group-a-text"><span class="badge-hist badge-a-hist">Azul</span>' + h.groupA.join(', ') + '</div>' +
+      '<div class="hist-g group-b-text" style="margin-top:4px"><span class="badge-hist badge-b-hist">Rojo</span>' + h.groupB.join(', ') + '</div>' +
+      '</div></div>'
+    ).join('');
+  }
+
+  function exportCSV() {
+    const history = JSON.parse(localStorage.getItem(H_KEY) || '[]');
+    if (!history.length) { alert('No hay historial para exportar.'); return; }
+    let csv = '\uFEFF' + 'Fecha,Grupo Azul,Grupo Rojo\n';
+    history.forEach(h => { csv += `"${h.date}","${h.groupA.join(' | ')}","${h.groupB.join(' | ')}"\n`; });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = 'grupos_5toAlef_' + new Date().toISOString().slice(0, 10) + '.csv';
+    a.click(); URL.revokeObjectURL(url);
+  }
+
+  function clearHistory() {
+    if (!confirm('¿Borrar todo el historial? No se puede deshacer.')) return;
+    localStorage.removeItem(H_KEY); renderHistory();
+  }
+
+  function switchTab(tab) {
+    const tabs = ['lista', 'spin', 'historial'];
+    document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', tabs[i] === tab));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + tab).classList.add('active');
+    if (tab === 'spin') renderWheel();
+    if (tab === 'historial') renderHistory();
+  }
+
+  // Arranque
+  loadFromSheets();
+  renderHistory();
+</script>
+</body>
+</html>
