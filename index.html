@@ -1,0 +1,143 @@
+
+      return true;
+    }
+
+    function animateSpin(targetIndex, targetStudent) {
+      const startAngle = currentAngle;
+      const spinTurns = 5 + ((spinCounter + targetIndex) % 4);
+      const landingDelta = additionalRotationForIndex(targetIndex);
+      const totalDelta = spinTurns * TAU + landingDelta;
+      const duration = 4300 + spinTurns * 180;
+      const startedAt = performance.now();
+
+      return new Promise((resolve) => {
+        function frame(now) {
+          const t = Math.min(1, (now - startedAt) / duration);
+          currentAngle = startAngle + totalDelta * easeOutCubic(t);
+          drawWheel();
+
+          if (t < 1) {
+            requestAnimationFrame(frame);
+            return;
+          }
+
+          currentAngle = startAngle + totalDelta;
+          drawWheel();
+          const exact = verifyAndCorrectLanding(targetIndex);
+          console.info(`Spin landed: target=${targetStudent.name} exact=${exact}`);
+          resolve();
+        }
+
+        requestAnimationFrame(frame);
+      });
+    }
+
+    function burstConfetti() {
+      const pieces = 70;
+      const palette = ["#ff3b30", "#ffcc00", "#34c759", "#35d9ff", "#a060ff", "#ff4fb8", "#fff8da"];
+      confetti.innerHTML = "";
+
+      for (let i = 0; i < pieces; i += 1) {
+        const piece = document.createElement("i");
+        const angle = (i / pieces) * TAU + (Math.random() - 0.5) * 0.6;
+        const distance = 140 + Math.random() * 520;
+        piece.style.setProperty("--c", palette[i % palette.length]);
+        piece.style.setProperty("--x", `${Math.cos(angle) * distance}px`);
+        piece.style.setProperty("--y", `${Math.sin(angle) * distance - 80}px`);
+        piece.style.setProperty("--r", `${Math.random() * 360}deg`);
+        piece.style.setProperty("--d", `${Math.random() * 110}ms`);
+        confetti.append(piece);
+      }
+
+      window.setTimeout(() => {
+        confetti.innerHTML = "";
+      }, 1300);
+    }
+
+    function showResult(student) {
+      const isBlue = student.order === 1;
+      resultName.textContent = student.name;
+      resultTeam.textContent = `→ TEAM ${isBlue ? "BLUE" : "RED"}`;
+      resultCard.classList.toggle("blue-team", isBlue);
+      resultCard.classList.toggle("red-team", !isBlue);
+      resultOverlay.classList.add("show");
+      resultOverlay.setAttribute("aria-hidden", "false");
+      burstConfetti();
+    }
+
+    function hideResult() {
+      resultOverlay.classList.remove("show");
+      resultOverlay.setAttribute("aria-hidden", "true");
+    }
+
+    function finishStudent(student) {
+      if (student.order === 1) {
+        drawnBlue.push(student);
+      } else {
+        drawnRed.push(student);
+      }
+
+      wheelStudents = wheelStudents.filter((candidate) => candidate.id !== student.id);
+      spinCounter += 1;
+      renderTeams();
+      drawWheel();
+    }
+
+    function showEndScreen() {
+      app.classList.add("game-finished");
+      renderFinalTeams();
+      endOverlay.classList.add("show");
+      endOverlay.setAttribute("aria-hidden", "false");
+      spinBtn.disabled = true;
+      statusEl.textContent = "";
+    }
+
+    async function doSpin() {
+      if (isSpinning || !wheelStudents.length) return;
+      const target = nextTarget();
+      if (!target) return;
+
+      const targetIndex = wheelStudents.findIndex((student) => student.id === target.id);
+      if (targetIndex < 0) {
+        console.error("Target was already removed from the wheel:", target);
+        return;
+      }
+
+      isSpinning = true;
+      spinBtn.disabled = true;
+      statusEl.textContent = "Spinning!";
+
+      await animateSpin(targetIndex, target);
+      showResult(target);
+      finishStudent(target);
+
+      window.setTimeout(() => {
+        hideResult();
+        isSpinning = false;
+
+        if (!wheelStudents.length) {
+          showEndScreen();
+          return;
+        }
+
+        spinBtn.disabled = false;
+        statusEl.textContent = "Ready!";
+      }, RESULT_HOLD_MS);
+    }
+
+    async function init() {
+      renderTeams();
+      const students = await loadStudents();
+      wheelStudents = students.map((student) => ({ ...student }));
+      drawQueue = buildDrawQueue(students);
+      spinCounter = 0;
+      fitCanvas();
+      spinBtn.disabled = false;
+    }
+
+    spinBtn.addEventListener("click", doSpin);
+    window.addEventListener("resize", fitCanvas);
+    init();
+  </script>
+</body>
+</html>
