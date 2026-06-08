@@ -230,7 +230,7 @@ async function loadNames() {
     const data = rows.filter((r, i) => i > 0 && r[0] && r[0].trim() && r[0].trim().toUpperCase() !== 'NOMBRE');
     if (!data.length) throw new Error('empty');
     students = data
-      .filter(r => r[3] && r[3].trim().toLowerCase() !== 'x') // excluir ausentes
+      .filter(r => !r[3] || r[3].trim().toLowerCase() !== 'x') // excluir ausentes (vacío = presente)
       .map(r => ({
         name: capitalize(r[0].trim()),
         group: parseInt(r[2]) || 1
