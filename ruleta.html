@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wheel of Fate</title>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --yellow: #FFE600; --red: #FF2D2D; --blue: #1A6EFF; --green: #00C853;
+    --orange: #FF7A00; --pink: #FF3DAA; --teal: #00D4CC; --purple: #9B00FF;
+    --black: #1A1008; --white: #FFFEF0;
+  }
+  body { font-family: 'Fredoka One', cursive; background-color: var(--black); color: var(--white); min-height: 100vh; overflow: hidden; position: relative; }
+  .bg-pattern { position: fixed; inset: 0; z-index: 0; background-color: #1A1008; overflow: hidden; }
+  .bg-pattern::before {
+    content: ''; position: absolute; inset: -50%;
+    background-image:
+      radial-gradient(circle at 20% 20%, #FF2D2D22 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, #1A6EFF22 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, #FFE60015 0%, transparent 60%),
+      radial-gradient(circle at 10% 80%, #9B00FF22 0%, transparent 30%),
+      radial-gradient(circle at 90% 10%, #00C85322 0%, transparent 30%);
+    animation: bgPulse 8s ease-in-out infinite alternate;
+  }
+  @keyframes bgPulse { 0% { transform: scale(1) rotate(0deg); } 100% { transform: scale(1.1) rotate(3deg); } }
+  .dot { position: fixed; border-radius: 50%; opacity: 0.15; animation: floatDot linear infinite; z-index: 0; }
+  @keyframes floatDot { 0% { transform: translateY(110vh) rotate(0deg); opacity: 0; } 10% { opacity: 0.15; } 90% { opacity: 0.15; } 100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; } }
+  .spark { position: fixed; width: 8px; height: 8px; background: var(--yellow); clip-path: polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%); animation: sparkFloat linear infinite; z-index: 0; opacity: 0; }
+  @keyframes sparkFloat { 0% { transform: translateY(100vh) scale(0) rotate(0deg); opacity: 0; } 20% { opacity: 0.6; } 80% { opacity: 0.6; } 100% { transform: translateY(-10vh) scale(1.5) rotate(360deg); opacity: 0; } }
+  .app { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 1.5rem 1rem; }
+  .title-wrap { text-align: center; margin-bottom: 1.5rem; }
+  h1 { font-family: 'Lilita One', cursive; font-size: clamp(3rem, 8vw, 6rem); line-height: 1; letter-spacing: -1px; display: inline-block; }
+  .title-letter { display: inline-block; animation: letterBounce 2s ease-in-out infinite; -webkit-text-stroke: 3px var(--black); paint-order: stroke fill; }
+  .title-letter:nth-child(1){color:var(--red);animation-delay:0.0s}
+  .title-letter:nth-child(2){color:var(--yellow);animation-delay:0.1s}
+  .title-letter:nth-child(3){color:var(--blue);animation-delay:0.2s}
+  .title-letter:nth-child(4){color:var(--green);animation-delay:0.3s}
+  .title-letter:nth-child(5){color:var(--orange);animation-delay:0.4s}
+  .title-letter:nth-child(6){color:var(--pink);animation-delay:0.5s}
+  .title-letter:nth-child(7){color:var(--teal);animation-delay:0.6s}
+  .title-letter:nth-child(8){color:var(--purple);animation-delay:0.7s}
+  .title-letter:nth-child(9){color:var(--yellow);animation-delay:0.8s}
+  .title-letter:nth-child(10){color:var(--red);animation-delay:0.9s}
+  .title-letter:nth-child(11){color:var(--blue);animation-delay:1.0s}
+  .title-letter:nth-child(12){color:var(--green);animation-delay:1.1s}
+  .title-letter:nth-child(13){color:var(--orange);animation-delay:1.2s}
+  @keyframes letterBounce { 0%,100%{transform:translateY(0) rotate(0deg)} 25%{transform:translateY(-8px) rotate(-3deg)} 75%{transform:translateY(4px) rotate(3deg)} }
+  .wheel-container { position: relative; display: flex; flex-direction: column; align-items: center; }
+  .wheel-outer { position: relative; width: min(61vw,442px); height: min(61vw,442px); margin-bottom: 1.5rem; }
+  .wheel-ring { position: absolute; inset: -12px; border-radius: 50%; background: conic-gradient(var(--red) 0deg,var(--orange) 45deg,var(--yellow) 90deg,var(--green) 135deg,var(--teal) 180deg,var(--blue) 225deg,var(--purple) 270deg,var(--pink) 315deg,var(--red) 360deg); animation: ringRotate 4s linear infinite; z-index: -1; }
+  @keyframes ringRotate { to { transform: rotate(360deg); } }
+  .wheel-pointer { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); z-index: 10; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)); }
+  .wheel-pointer svg { width: 36px; height: 44px; }
+  canvas { display: block; width: 100%; height: 100%; border-radius: 50%; box-shadow: 0 0 0 4px var(--black), 0 8px 40px rgba(0,0,0,0.6), 0 0 60px rgba(255,230,0,0.15); }
+  .spin-btn { font-family: 'Lilita One', cursive; font-size: clamp(1.4rem,4vw,2.2rem); padding: 0.7em 2.5em; border: none; border-radius: 100px; cursor: pointer; transition: transform 0.1s; letter-spacing: 1px; text-transform: uppercase; background: var(--yellow); color: var(--black); box-shadow: 0 6px 0 #B8A800, 0 8px 20px rgba(255,230,0,0.4); }
+  .spin-btn::before { content: '★'; margin-right: 10px; display: inline-block; animation: starSpin 1s linear infinite; }
+  .spin-btn::after { content: '★'; margin-left: 10px; display: inline-block; animation: starSpin 1s linear infinite reverse; }
+  @keyframes starSpin { to { transform: rotate(360deg); } }
+  .spin-btn:hover { transform: translateY(-3px); box-shadow: 0 9px 0 #B8A800, 0 12px 30px rgba(255,230,0,0.5); }
+  .spin-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #B8A800; }
+  .spin-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .result-flash { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; opacity: 0; transition: opacity 0.2s; }
+  .result-flash.show { opacity: 1; }
+  .result-name-big { font-family: 'Lilita One', cursive; font-size: clamp(4rem,15vw,10rem); line-height: 1; -webkit-text-stroke: 4px var(--black); paint-order: stroke fill; text-shadow: 8px 8px 0 rgba(0,0,0,0.4); animation: resultPop 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards; transform: scale(0); }
+  @keyframes resultPop { to { transform: scale(1); } }
+  .result-group-tag { font-family: 'Lilita One', cursive; font-size: clamp(1.5rem,5vw,3rem); padding: 0.3em 1.2em; border-radius: 100px; margin-top: 0.5rem; -webkit-text-stroke: 2px var(--black); paint-order: stroke fill; animation: resultPop 0.4s 0.1s cubic-bezier(0.34,1.56,0.64,1) both; transform: scale(0); box-shadow: 0 6px 0 rgba(0,0,0,0.3); }
+  .tag-blue { background: var(--blue); color: var(--white); }
+  .tag-red { background: var(--red); color: var(--white); }
+  .confetti-piece { position: fixed; width: 10px; height: 10px; border-radius: 2px; pointer-events: none; z-index: 99; animation: confettiFall 1.2s ease-in forwards; opacity: 0; }
+  @keyframes confettiFall { 0%{transform:translateY(0) rotate(0deg) scale(1);opacity:1} 100%{transform:translateY(60vh) rotate(720deg) scale(0.3);opacity:0} }
+  .groups-screen { display: none; position: fixed; inset: 0; z-index: 200; background: var(--black); flex-direction: column; align-items: center; justify-content: center; padding: 2rem; animation: screenIn 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+  .groups-screen.show { display: flex; }
+  @keyframes screenIn { from{transform:scale(0.8) rotate(-5deg);opacity:0} to{transform:scale(1) rotate(0deg);opacity:1} }
+  .groups-title { font-family: 'Lilita One', cursive; font-size: clamp(2rem,6vw,4rem); color: var(--yellow); -webkit-text-stroke: 3px var(--black); paint-order: stroke fill; margin-bottom: 2rem; text-align: center; animation: letterBounce 1.5s ease-in-out infinite; }
+  .groups-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; width: 100%; max-width: 900px; }
+  .group-card { border-radius: 20px; padding: 1.5rem; border: 4px solid var(--black); box-shadow: 8px 8px 0 var(--black); }
+  .group-card-blue { background: var(--blue); }
+  .group-card-red { background: var(--red); }
+  .group-card-title { font-family: 'Lilita One', cursive; font-size: clamp(1.4rem,4vw,2.5rem); color: var(--white); -webkit-text-stroke: 2px var(--black); paint-order: stroke fill; margin-bottom: 1rem; text-align: center; }
+  .group-names { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .name-pill { font-family: 'Fredoka One', cursive; font-size: clamp(0.9rem,2.5vw,1.3rem); background: rgba(255,255,255,0.92); color: var(--black); padding: 0.3em 0.9em; border-radius: 100px; border: 2px solid var(--black); box-shadow: 3px 3px 0 rgba(0,0,0,0.3); animation: pillPop 0.4s cubic-bezier(0.34,1.56,0.64,1) both; }
+  @keyframes pillPop { from{transform:scale(0) rotate(-10deg);opacity:0} to{transform:scale(1) rotate(0deg);opacity:1} }
+  .loading-msg { font-family: 'Fredoka One', cursive; font-size: 1.1rem; color: rgba(255,255,240,0.5); margin-top: 1rem; text-align: center; }
+  .queue-area { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 600px; margin-top: 1rem; }
+  .q-pill { font-family: 'Fredoka One', cursive; font-size: 0.85rem; padding: 3px 10px; border-radius: 100px; border: 2px solid rgba(255,255,255,0.2); color: rgba(255,255,240,0.7); background: rgba(255,255,255,0.08); }
+  .q-pill.done { text-decoration: line-through; opacity: 0.3; }
+  .q-pill.next-blue { background: rgba(26,110,255,0.35); border-color: var(--blue); color: var(--white); font-size: 0.95rem; }
+  .q-pill.next-red { background: rgba(255,45,45,0.35); border-color: var(--red); color: var(--white); font-size: 0.95rem; }
+</style>
+</head>
+<body>
+<div class="bg-pattern"></div>
+<div class="app" id="main-app">
+  <div class="title-wrap"><h1 id="title-h1"></h1></div>
+  <div class="wheel-container">
+    <div class="wheel-outer">
+      <div class="wheel-ring"></div>
+      <div class="wheel-pointer">
+        <svg viewBox="0 0 36 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 44 L0 4 Q18 -4 36 4 Z" fill="#FFE600" stroke="#1A1008" stroke-width="3" stroke-linejoin="round"/>
+          <circle cx="18" cy="10" r="5" fill="#FF2D2D" stroke="#1A1008" stroke-width="2"/>
+        </svg>
+      </div>
+      <canvas id="wheel"></canvas>
+    </div>
+    <button class="spin-btn" id="spin-btn" onclick="spinWheel()">SPIN</button>
+    <p class="loading-msg" id="loading-msg">Cargando nombres...</p>
+    <div class="queue-area" id="queue-area"></div>
+  </div>
+</div>
+<div class="result-flash" id="result-flash">
+  <div class="result-name-big" id="result-name-big"></div>
+  <div class="result-group-tag" id="result-group-tag"></div>
+</div>
+<div class="groups-screen" id="groups-screen">
+  <div class="groups-title">¡Los Grupos!</div>
+  <div class="groups-cols">
+    <div class="group-card group-card-blue">
+      <div class="group-card-title">⭐ Grupo Azul</div>
+      <div class="group-names" id="final-group-a"></div>
+    </div>
+    <div class="group-card group-card-red">
+      <div class="group-card-title">🔥 Grupo Rojo</div>
+      <div class="group-names" id="final-group-b"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSzgg3XMiyBoKZfuAl9vKoXXtgGRBvruSCZble4BM6RkWFN3QYdTnnKKe4vvn2Gmyv0dOjGS-dhpUr0/pub?output=csv';
+
+// Fallback: respeta el orden del sheet. group: 1=Azul, 2=Rojo
+const FALLBACK = [
+  {name:'Agustín',group:2},{name:'Pipe',group:1},{name:'Fede',group:2},
+  {name:'Mora',group:2},{name:'Delfina',group:1},{name:'Roddy',group:2},
+  {name:'Julián',group:1},{name:'Luciano',group:2},{name:'Santi',group:2},
+  {name:'Maca',group:2},{name:'Valen',group:2},{name:'Manchu',group:1},
+  {name:'Martín',group:2},{name:'Larry',group:1},{name:'Dante',group:1},
+  {name:'Eli',group:1},{name:'Facundo',group:1},{name:'Manu',group:1},
+  {name:'Nao',group:2},{name:'Giuliana',group:1}
+];
+
+const TITLE = 'Wheel of Fate';
+const SEG_COLORS = [
+  '#FF2D2D','#1A6EFF','#00C853','#FF7A00','#9B00FF',
+  '#FF3DAA','#00D4CC','#FFE600','#FF2D2D','#1A6EFF',
+  '#00C853','#FF7A00','#9B00FF','#FF3DAA','#00D4CC',
+  '#FFE600','#FF2D2D','#1A6EFF','#00C853','#FF7A00'
+];
+
+// spinSequence: orden predefinido de sorteo [{name, isA}]
+// currentSpin: nombres que quedan en la rueda en este momento
+let spinSequence = [];
+let currentSpin = [];
+let groupA = [], groupB = [];
+let spinning = false;
+let currentAngle = 0;
+let spinIndex = 0;
+let canvasSize = 0;
+
+// Arma la secuencia intercalada: g1[0], g2[0], g1[1], g2[1]...
+function buildSequence(students) {
+  const g1 = students.filter(s => s.group === 1);
+  const g2 = students.filter(s => s.group === 2);
+  const seq = [];
+  const len = Math.max(g1.length, g2.length);
+  for (let i = 0; i < len; i++) {
+    if (i < g1.length) seq.push({name: g1[i].name, isA: true});
+    if (i < g2.length) seq.push({name: g2[i].name, isA: false});
+  }
+  return seq;
+}
+
+function buildTitle() {
+  const h1 = document.getElementById('title-h1');
+  TITLE.split('').forEach(ch => {
+    if (ch === ' ') { const s = document.createElement('span'); s.innerHTML = '&nbsp;'; h1.appendChild(s); return; }
+    const span = document.createElement('span');
+    span.className = 'title-letter';
+    span.textContent = ch;
+    h1.appendChild(span);
+  });
+}
+
+function spawnParticles() {
+  const colors = ['#FF2D2D','#FFE600','#1A6EFF','#00C853','#FF7A00','#9B00FF','#FF3DAA','#00D4CC'];
+  for (let i = 0; i < 18; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    const size = 20 + Math.random() * 60;
+    dot.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;background:${colors[i%colors.length]};animation-duration:${8+Math.random()*12}s;animation-delay:${Math.random()*10}s`;
+    document.body.appendChild(dot);
+  }
+  for (let i = 0; i < 12; i++) {
+    const spark = document.createElement('div');
+    spark.className = 'spark';
+    spark.style.cssText = `left:${Math.random()*100}%;width:${8+Math.random()*12}px;height:${8+Math.random()*12}px;background:${colors[i%colors.length]};animation-duration:${6+Math.random()*8}s;animation-delay:${Math.random()*8}s`;
+    document.body.appendChild(spark);
+  }
+}
+
+function parseCSV(text) {
+  return text.trim().split('\n').map(line => {
+    const cols = []; let inQ = false, cell = '';
+    for (const c of line) {
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { cols.push(cell.trim()); cell = ''; }
+      else cell += c;
+    }
+    cols.push(cell.trim());
+    return cols;
+  });
+}
+
+function capitalize(s) {
+  if (!s) return '';
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+async function loadNames() {
+  let students = [];
+  try {
+    const res = await fetch(CSV_URL, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    if (text.includes('<!DOCTYPE') || text.includes('<html')) throw new Error('not csv');
+    const rows = parseCSV(text);
+    const data = rows.filter((r, i) => i > 0 && r[0] && r[0].trim() && r[0].trim().toUpperCase() !== 'NOMBRE');
+    if (!data.length) throw new Error('empty');
+    students = data
+      .filter(r => !r[3] || r[3].trim().toLowerCase() !== 'x') // excluir ausentes (vacío = presente)
+      .map(r => ({
+        name: capitalize(r[0].trim()),
+        group: parseInt(r[2]) || 1
+      }))
+      .filter(s => s.name && (s.group === 1 || s.group === 2));
+    if (!students.length) throw new Error('no valid students');
+  } catch(e) {
+    students = FALLBACK;
+  }
+  spinSequence = buildSequence(students);
+  currentSpin = spinSequence.map(s => s.name);
+  spinIndex = 0;
+  const btn = document.getElementById('spin-btn');
+  btn.textContent = 'SPIN';
+  btn.disabled = false;
+  document.getElementById('loading-msg').style.display = 'none';
+  setupCanvas();
+  drawWheel(currentAngle);
+  renderQueue();
+}
+
+function setupCanvas() {
+  const canvas = document.getElementById('wheel');
+  const outer = canvas.parentElement;
+  canvasSize = outer.offsetWidth;
+  canvas.width = canvasSize;
+  canvas.height = canvasSize;
+}
+
+function drawWheel(angle) {
+  const canvas = document.getElementById('wheel');
+  const ctx = canvas.getContext('2d');
+  const cx = canvasSize / 2, cy = canvasSize / 2, r = canvasSize / 2 - 2;
+  ctx.clearRect(0, 0, canvasSize, canvasSize);
+  const names = currentSpin;
+  if (!names.length) return;
+  const n = names.length;
+  const arc = (2 * Math.PI) / n;
+
+  names.forEach((name, i) => {
+    const start = angle + i * arc - Math.PI / 2;
+    const end = start + arc;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, start, end); ctx.closePath();
+    ctx.fillStyle = SEG_COLORS[i % SEG_COLORS.length]; ctx.fill();
+    ctx.strokeStyle = '#1A1008'; ctx.lineWidth = 3; ctx.stroke();
+
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(start + arc / 2);
+    const fontSize = n > 16 ? Math.max(10, canvasSize*0.028) : n > 12 ? canvasSize*0.032 : canvasSize*0.038;
+    ctx.font = `${fontSize}px 'Fredoka One', cursive`;
+    ctx.textAlign = 'right';
+    ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.lineWidth = 3;
+    ctx.letterSpacing = '2px';
+    ctx.strokeText(name, r - 14, fontSize * 0.38);
+    ctx.fillStyle = '#FFFEF0';
+    ctx.fillText(name, r - 14, fontSize * 0.38);
+    ctx.restore();
+  });
+
+  ctx.beginPath(); ctx.arc(cx, cy, canvasSize * 0.07, 0, 2 * Math.PI);
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, canvasSize * 0.07);
+  grad.addColorStop(0, '#FFE600'); grad.addColorStop(1, '#FF7A00');
+  ctx.fillStyle = grad; ctx.fill();
+  ctx.strokeStyle = '#1A1008'; ctx.lineWidth = 3; ctx.stroke();
+
+  ctx.save(); ctx.translate(cx, cy);
+  ctx.fillStyle = '#1A1008'; ctx.font = `${canvasSize * 0.06}px serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('★', 0, 0);
+  ctx.restore();
+}
+
+function renderQueue() {
+  const wrap = document.getElementById('queue-area');
+  wrap.innerHTML = '';
+  spinSequence.forEach((item, i) => {
+    const span = document.createElement('span');
+    if (i < spinIndex) span.className = 'q-pill done';
+    else if (i === spinIndex) span.className = 'q-pill ' + (item.isA ? 'next-blue' : 'next-red');
+    else span.className = 'q-pill';
+    span.textContent = item.name;
+    wrap.appendChild(span);
+  });
+}
+
+function confettiBurst(x, y) {
+  const colors = ['#FF2D2D','#FFE600','#1A6EFF','#00C853','#FF7A00','#9B00FF','#FF3DAA','#00D4CC'];
+  for (let i = 0; i < 30; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    const a = Math.random() * 2 * Math.PI;
+    const dist = 80 + Math.random() * 200;
+    el.style.cssText = `left:${x}px;top:${y}px;background:${colors[i%colors.length]};width:${6+Math.random()*10}px;height:${6+Math.random()*10}px;transform:translate(${Math.cos(a)*dist}px,${Math.sin(a)*dist}px);animation-duration:${0.8+Math.random()*0.6}s;animation-delay:${Math.random()*0.2}s;border-radius:${Math.random()>0.5?'50%':'2px'}`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2000);
+  }
+}
+
+function showResult(name, isA) {
+  const flash = document.getElementById('result-flash');
+  const nameEl = document.getElementById('result-name-big');
+  const tagEl = document.getElementById('result-group-tag');
+  nameEl.style.color = isA ? '#1A6EFF' : '#FF2D2D';
+  nameEl.textContent = name;
+  tagEl.className = 'result-group-tag ' + (isA ? 'tag-blue' : 'tag-red');
+  tagEl.textContent = isA ? '→ GRUPO AZUL' : '→ GRUPO ROJO';
+  nameEl.style.animation = 'none'; nameEl.offsetHeight; nameEl.style.animation = '';
+  tagEl.style.animation = 'none'; tagEl.offsetHeight; tagEl.style.animation = '';
+  flash.classList.add('show');
+  confettiBurst(window.innerWidth / 2, window.innerHeight / 2);
+  setTimeout(() => flash.classList.remove('show'), 2200);
+}
+
+function spinWheel() {
+  if (spinning || spinIndex >= spinSequence.length) return;
+  spinning = true;
+  document.getElementById('spin-btn').disabled = true;
+
+  const target = spinSequence[spinIndex];
+  const targetName = target.name;
+
+  // Find position of targetName in currentSpin
+  const targetPosInWheel = currentSpin.indexOf(targetName);
+  const n = currentSpin.length;
+  const arc = (2 * Math.PI) / n;
+
+  // Angle that puts targetName under the pointer (top = -PI/2)
+  const targetAngle = -(targetPosInWheel * arc) - arc / 2;
+  const totalSpin = (6 + Math.random() * 4) * 2 * Math.PI;
+  const normCurrent = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  const normTarget = ((targetAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  const diff = ((normTarget - normCurrent) + 2 * Math.PI) % (2 * Math.PI);
+  const totalRotation = totalSpin + diff;
+  const duration = 3000 + Math.random() * 1200;
+  const startTime = performance.now();
+  const startAngle = currentAngle;
+
+  function ease(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; }
+
+  function animate(now) {
+    const t = Math.min((now - startTime) / duration, 1);
+    currentAngle = startAngle + totalRotation * ease(t);
+    drawWheel(currentAngle);
+    if (t < 1) { requestAnimationFrame(animate); return; }
+
+    spinning = false;
+    const isA = target.isA;
+    if (isA) groupA.push(targetName); else groupB.push(targetName);
+    spinIndex++;
+
+    // Remove winner from wheel
+    currentSpin = currentSpin.filter(n => n !== targetName);
+
+    renderQueue();
+    showResult(targetName, isA);
+
+    setTimeout(() => {
+      if (spinIndex >= spinSequence.length) {
+        setTimeout(showFinalGroups, 800);
+      } else {
+        // Redraw wheel without the winner
+        drawWheel(currentAngle);
+        document.getElementById('spin-btn').disabled = false;
+      }
+    }, 2400);
+  }
+  requestAnimationFrame(animate);
+}
+
+function showFinalGroups() {
+  const screen = document.getElementById('groups-screen');
+  const aDiv = document.getElementById('final-group-a');
+  const bDiv = document.getElementById('final-group-b');
+  aDiv.innerHTML = ''; bDiv.innerHTML = '';
+  groupA.forEach((name, i) => {
+    const pill = document.createElement('span');
+    pill.className = 'name-pill'; pill.style.animationDelay = (i * 0.08) + 's'; pill.textContent = name;
+    aDiv.appendChild(pill);
+  });
+  groupB.forEach((name, i) => {
+    const pill = document.createElement('span');
+    pill.className = 'name-pill'; pill.style.animationDelay = (i * 0.08 + 0.1) + 's'; pill.textContent = name;
+    bDiv.appendChild(pill);
+  });
+  screen.classList.add('show');
+  confettiBurst(window.innerWidth * 0.25, window.innerHeight / 2);
+  confettiBurst(window.innerWidth * 0.75, window.innerHeight / 2);
+}
+
+buildTitle();
+spawnParticles();
+loadNames();
+window.addEventListener('resize', () => { setupCanvas(); drawWheel(currentAngle); });
+</script>
+</body>
+</html>
